@@ -1,7 +1,4 @@
-"""
-API Gateway — Loja Veloz / Pedidos Veloz
-Entrada HTTP única para o cliente. Faz fan-out para os microsserviços internos.
-"""
+"""API Gateway — Loja Veloz"""
 import os
 import logging
 from typing import Any

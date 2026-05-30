@@ -9,7 +9,6 @@ resources:
 
 namespace: loja-veloz
 
-# Em prod: réplicas iniciais maiores para sustentar pico
 patches:
   - target: { kind: Deployment, name: api-gateway }
     patch: |

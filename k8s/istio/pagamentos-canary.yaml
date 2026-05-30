@@ -1,10 +1,3 @@
-# =============================================================================
-# CANARY DEPLOYMENT — Pagamentos
-# Estratégia: tráfego 95% v1 / 5% v2, com promoção progressiva
-# Justificativa: Pagamentos tem o maior impacto financeiro em caso de regressão.
-# O canary permite validar a v2 com uma fração mínima de usuários reais antes
-# de promover. Rollback é um único kubectl apply revertendo os pesos.
-# =============================================================================
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:

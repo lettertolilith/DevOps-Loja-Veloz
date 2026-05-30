@@ -1,8 +1,3 @@
-# =============================================================================
-# mTLS STRICT — comunicação criptografada entre todos os pods do namespace
-# Justificativa: zero-trust networking. Mesmo dentro do cluster, todos os
-# pares precisam apresentar certificado x509 emitido pelo Istio CA.
-# =============================================================================
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
@@ -12,9 +7,6 @@ spec:
   mtls:
     mode: STRICT
 ---
-# =============================================================================
-# AuthorizationPolicy — quem pode chamar quem
-# =============================================================================
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:

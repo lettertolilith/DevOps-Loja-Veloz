@@ -1,6 +1,3 @@
-# =============================================================================
-# Istio Gateway: ponto de entrada HTTP da malha
-# =============================================================================
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
@@ -28,9 +25,6 @@ spec:
         mode: SIMPLE
         credentialName: loja-veloz-tls   # cert-manager + Let's Encrypt
 ---
-# =============================================================================
-# VirtualService: roteia tráfego externo -> api-gateway
-# =============================================================================
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:

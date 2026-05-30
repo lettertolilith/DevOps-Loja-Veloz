@@ -8,7 +8,6 @@ namespace: loja-veloz
 
 namePrefix: ""
 
-# Em dev: réplicas reduzidas para economizar recursos
 patches:
   - target: { kind: Deployment, name: api-gateway }
     patch: |

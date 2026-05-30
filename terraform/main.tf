@@ -1,11 +1,3 @@
-# =============================================================================
-# Loja Veloz — Infraestrutura como Código (IaC) com Terraform
-# Esqueleto: VPC + EKS Cluster + Node Group
-# Justificativa: declarar a infra em Git permite criar/destruir ambientes
-# (dev/staging/prod) de forma reproduzível e auditável. State remoto no S3
-# com lock no DynamoDB evita corrupção em times.
-# =============================================================================
-
 terraform {
   required_version = ">= 1.6"
 
@@ -15,7 +7,6 @@ terraform {
     helm       = { source = "hashicorp/helm",       version = "~> 2.14" }
   }
 
-  # Remote state — descomente após criar bucket e tabela
   # backend "s3" {
   #   bucket         = "loja-veloz-tfstate"
   #   key            = "envs/dev/terraform.tfstate"
@@ -37,7 +28,6 @@ provider "aws" {
   }
 }
 
-# --- VPC ---
 module "vpc" {
   source = "./modules/vpc"
 
@@ -47,7 +37,6 @@ module "vpc" {
   environment = var.environment
 }
 
-# --- EKS Cluster ---
 module "eks" {
   source = "./modules/eks"
 
@@ -69,11 +58,81 @@ module "eks" {
   environment = var.environment
 }
 
-# --- Outputs úteis ---
+resource "aws_iam_openid_connect_provider" "github" {
+  url            = "https://token.actions.githubusercontent.com"
+  client_id_list = ["sts.amazonaws.com"]
+  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+}
+
+data "aws_iam_policy_document" "github_actions_assume" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github.arn]
+    }
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:${var.github_repo}:*"]
+    }
+  }
+}
+
+resource "aws_iam_role" "github_actions" {
+  name               = "loja-veloz-${var.environment}-github-actions-role"
+  assume_role_policy = data.aws_iam_policy_document.github_actions_assume.json
+}
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_iam_policy" "eks_deploy" {
+  name        = "loja-veloz-${var.environment}-eks-deploy-policy"
+  description = "Permissões para GitHub Actions fazer deploy no EKS"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "eks:DescribeCluster",
+        ]
+        Resource = "arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}:cluster/loja-veloz-${var.environment}"
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_eks" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.eks_deploy.arn
+}
+
+resource "aws_eks_access_entry" "github_actions" {
+  cluster_name  = module.eks.cluster_name
+  principal_arn = aws_iam_role.github_actions.arn
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "github_actions_admin" {
+  cluster_name  = module.eks.cluster_name
+  principal_arn = aws_iam_role.github_actions.arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  access_scope {
+    type = "cluster"
+  }
+  depends_on = [aws_eks_access_entry.github_actions]
+}
+
 output "cluster_endpoint" {
   value = module.eks.cluster_endpoint
 }
 
 output "cluster_name" {
   value = module.eks.cluster_name
+}
+
+output "github_actions_role_arn" {
+  description = "ARN da IAM role para GitHub Actions"
+  value       = aws_iam_role.github_actions.arn
 }

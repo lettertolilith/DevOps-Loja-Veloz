@@ -1,7 +1,4 @@
 # syntax=docker/dockerfile:1.7
-# ============================================================
-# STAGE 1 — builder: instala dependências em wheels
-# ============================================================
 FROM python:3.12-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -13,22 +10,17 @@ WORKDIR /build
 COPY requirements.txt .
 RUN pip wheel --wheel-dir /wheels -r requirements.txt
 
-# ============================================================
-# STAGE 2 — runtime: imagem final enxuta com usuário não-root
-# ============================================================
 FROM python:3.12-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
-# Usuário sem privilégios (UID 10001)
 RUN groupadd --system --gid 10001 app && \
     useradd  --system --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app
 
 WORKDIR /app
 
-# Instala apenas a partir dos wheels já compilados
 COPY --from=builder /wheels /wheels
 RUN pip install --no-index --find-links=/wheels /wheels/*.whl && rm -rf /wheels
 
@@ -37,7 +29,6 @@ COPY --chown=app:app app/ ./app/
 USER 10001
 EXPOSE 8000
 
-# Healthcheck para Docker/Compose (em K8s as probes ficam no manifest)
 HEALTHCHECK --interval=15s --timeout=3s --retries=3 \
   CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health/live').status==200 else 1)"
 

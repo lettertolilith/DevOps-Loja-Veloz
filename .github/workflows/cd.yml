@@ -14,9 +14,12 @@ on:
         type: choice
         options: [dev, prod]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   contents: read
-  id-token: write   # OIDC para autenticar no cluster sem secrets de longo prazo
+  id-token: write
 
 jobs:
   deploy:
@@ -24,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.event.inputs.environment || 'dev' }}
-      # url: https://${{ env.PUBLIC_URL }}   # opcional
+
 
     steps:
       - uses: actions/checkout@v4
@@ -49,7 +52,7 @@ jobs:
         working-directory: k8s/overlays/${{ github.event.inputs.environment || 'dev' }}
         run: |
           for svc in api-gateway pedidos pagamentos estoque; do
-            kustomize edit set image ghcr.io/loja-veloz/$svc=ghcr.io/loja-veloz/$svc:sha-${GITHUB_SHA:0:7}
+            kustomize edit set image ghcr.io/loja-veloz/$svc=ghcr.io/${{ github.repository_owner }}/$svc:sha-${GITHUB_SHA:0:7}
           done
 
       - name: Apply manifests (rolling update)

@@ -1,8 +1,4 @@
-"""
-Serviço Pagamentos — Loja Veloz
-Consome PedidoCriado do RabbitMQ e simula integração com gateway externo.
-Expõe também endpoint síncrono /pagamentos para autorização imediata.
-"""
+"""Serviço Pagamentos — Loja Veloz"""
 import os
 import json
 import logging

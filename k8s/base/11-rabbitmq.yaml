@@ -21,7 +21,7 @@ metadata:
   namespace: loja-veloz
 spec:
   serviceName: rabbitmq
-  replicas: 1   # No MVP: 1. Em prod: 3 com mirroring/quorum queues.
+  replicas: 1
   selector:
     matchLabels:
       app: rabbitmq

@@ -18,7 +18,7 @@ metadata:
   namespace: loja-veloz
 spec:
   serviceName: postgres
-  replicas: 1  # No MVP: 1 réplica. Em prod: usar RDS/Cloud SQL gerenciado.
+  replicas: 1
   selector:
     matchLabels:
       app: postgres

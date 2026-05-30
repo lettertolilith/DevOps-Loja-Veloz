@@ -1,6 +1,3 @@
-# =============================================================================
-# Horizontal Pod Autoscalers — escala horizontal sob picos da campanha
-# =============================================================================
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -68,9 +65,6 @@ spec:
     - type: Resource
       resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }
 ---
-# =============================================================================
-# PodDisruptionBudgets — garante disponibilidade durante drains de nó
-# =============================================================================
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -97,7 +91,7 @@ metadata:
   name: pagamentos-pdb
   namespace: loja-veloz
 spec:
-  minAvailable: 2  # serviço crítico — manter ao menos 2 pods
+  minAvailable: 2
   selector:
     matchLabels: { app: pagamentos }
 ---

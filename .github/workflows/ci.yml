@@ -7,7 +7,6 @@ on:
   pull_request:
     branches: [main]
 
-# Permissões mínimas (least privilege)
 permissions:
   contents: read
   packages: write       # publicar no GHCR
@@ -17,13 +16,9 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
-  # Opt-in to Node.js 24 runners (default from June 16, 2026)
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # ---------------------------------------------------------------------------
-  # JOB 1 — Lint + Testes (paralelo por serviço, via matrix)
-  # ---------------------------------------------------------------------------
   test:
     name: Test — ${{ matrix.service }}
     runs-on: ubuntu-latest
@@ -49,7 +44,7 @@ jobs:
 
       - name: Lint (ruff)
         working-directory: services/${{ matrix.service }}
-        run: ruff check app/ || true   # MVP: report only
+        run: ruff check app/ || true
 
       - name: Run tests
         working-directory: services/${{ matrix.service }}
@@ -63,9 +58,6 @@ jobs:
           name: coverage-${{ matrix.service }}
           path: services/${{ matrix.service }}/coverage.xml
 
-  # ---------------------------------------------------------------------------
-  # JOB 2 — Build de imagens (apenas após testes verdes)
-  # ---------------------------------------------------------------------------
   build:
     name: Build & Scan — ${{ matrix.service }}
     needs: test
@@ -115,7 +107,7 @@ jobs:
           format: 'sarif'
           output: 'trivy-${{ matrix.service }}.sarif'
           severity: 'CRITICAL,HIGH'
-          exit-code: '0'   # MVP: report only. Em prod: 1 para bloquear.
+          exit-code: '0'
 
       - name: Upload Trivy results
         if: always()
@@ -135,9 +127,33 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ---------------------------------------------------------------------------
-  # JOB 3 — Validar manifests Kubernetes
-  # ---------------------------------------------------------------------------
+  validate-terraform:
+    name: Validate Terraform
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+
+      - name: Check formatting
+        run: terraform fmt -recursive -check
+
+      - name: Initialize (no backend for validation)
+        run: terraform init -backend=false
+
+      - name: Validate
+        run: |
+          terraform validate \
+            -var region=us-east-1 \
+            -var environment=dev \
+            -var github_repo=lettertolilith/DevOps-Loja-Veloz
+
   validate-k8s:
     name: Validate K8s manifests
     runs-on: ubuntu-latest

@@ -13,3 +13,8 @@ variable "environment" {
     error_message = "environment deve ser: dev, staging ou prod."
   }
 }
+
+variable "github_repo" {
+  description = "lettertolilith/DevOps-Loja-Veloz"
+  type        = string
+}

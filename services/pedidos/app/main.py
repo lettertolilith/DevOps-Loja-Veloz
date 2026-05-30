@@ -1,7 +1,4 @@
-"""
-Serviço Pedidos — Loja Veloz
-Cria e consulta pedidos. Publica evento PedidoCriado no RabbitMQ.
-"""
+"""Serviço Pedidos — Loja Veloz"""
 import os
 import json
 import uuid
@@ -49,7 +46,7 @@ def get_db() -> psycopg.Connection:
 
 
 def init_schema() -> None:
-    """Cria tabela se não existir (em produção, use Alembic/migrations)."""
+    """Cria tabela se não existir."""
     try:
         with get_db() as conn, conn.cursor() as cur:
             cur.execute("""
@@ -83,7 +80,6 @@ def publicar_evento(pedido: dict[str, Any]) -> None:
         log.info(f"evento PedidoCriado publicado id={pedido['id']}")
     except Exception as e:
         log.error(f"falha ao publicar evento: {e}")
-        # Não derruba a request — outbox pattern seria o próximo passo.
 
 
 def _startup() -> None:

@@ -1,7 +1,4 @@
-"""
-Serviço Estoque — Loja Veloz
-Reserva e baixa de itens. Consome PedidoCriado para reservar.
-"""
+"""Serviço Estoque — Loja Veloz"""
 import os
 import json
 import logging
