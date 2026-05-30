@@ -1,0 +1,56 @@
+# =============================================================================
+# CANARY DEPLOYMENT — Pagamentos
+# Estratégia: tráfego 95% v1 / 5% v2, com promoção progressiva
+# Justificativa: Pagamentos tem o maior impacto financeiro em caso de regressão.
+# O canary permite validar a v2 com uma fração mínima de usuários reais antes
+# de promover. Rollback é um único kubectl apply revertendo os pesos.
+# =============================================================================
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: pagamentos-dr
+  namespace: loja-veloz
+spec:
+  host: pagamentos.loja-veloz.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp: { maxConnections: 100 }
+      http:
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 50
+  subsets:
+    - name: v1
+      labels: { version: v1 }
+    - name: v2
+      labels: { version: v2 }
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: pagamentos-vs
+  namespace: loja-veloz
+spec:
+  hosts: [pagamentos.loja-veloz.svc.cluster.local]
+  http:
+    # ETAPA 1 (atual): 95% v1, 5% v2
+    # ETAPA 2: 75% v1, 25% v2
+    # ETAPA 3: 0% v1, 100% v2 — depois remover Deployment v1
+    - route:
+        - destination:
+            host: pagamentos.loja-veloz.svc.cluster.local
+            subset: v1
+          weight: 95
+        - destination:
+            host: pagamentos.loja-veloz.svc.cluster.local
+            subset: v2
+          weight: 5
+      retries:
+        attempts: 2
+        perTryTimeout: 3s
+        retryOn: "5xx"
+      timeout: 8s

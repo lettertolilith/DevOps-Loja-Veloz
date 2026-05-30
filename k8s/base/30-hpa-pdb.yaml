@@ -1,0 +1,112 @@
+# =============================================================================
+# Horizontal Pod Autoscalers — escala horizontal sob picos da campanha
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-gateway-hpa
+  namespace: loja-veloz
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-gateway
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 70 }
+    - type: Resource
+      resource:
+        name: memory
+        target: { type: Utilization, averageUtilization: 80 }
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies: [{ type: Percent, value: 100, periodSeconds: 30 }]
+    scaleDown:
+      stabilizationWindowSeconds: 300   # evita flapping após pico
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pedidos-hpa
+  namespace: loja-veloz
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: pedidos }
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pagamentos-v1-hpa
+  namespace: loja-veloz
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: pagamentos-v1 }
+  minReplicas: 3
+  maxReplicas: 12
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: estoque-hpa
+  namespace: loja-veloz
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: estoque }
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }
+---
+# =============================================================================
+# PodDisruptionBudgets — garante disponibilidade durante drains de nó
+# =============================================================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-gateway-pdb
+  namespace: loja-veloz
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: { app: api-gateway }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pedidos-pdb
+  namespace: loja-veloz
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: { app: pedidos }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pagamentos-pdb
+  namespace: loja-veloz
+spec:
+  minAvailable: 2  # serviço crítico — manter ao menos 2 pods
+  selector:
+    matchLabels: { app: pagamentos }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: estoque-pdb
+  namespace: loja-veloz
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: { app: estoque }

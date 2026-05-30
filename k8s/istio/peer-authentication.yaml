@@ -1,0 +1,53 @@
+# =============================================================================
+# mTLS STRICT — comunicação criptografada entre todos os pods do namespace
+# Justificativa: zero-trust networking. Mesmo dentro do cluster, todos os
+# pares precisam apresentar certificado x509 emitido pelo Istio CA.
+# =============================================================================
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: loja-veloz
+spec:
+  mtls:
+    mode: STRICT
+---
+# =============================================================================
+# AuthorizationPolicy — quem pode chamar quem
+# =============================================================================
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: pedidos-authz
+  namespace: loja-veloz
+spec:
+  selector:
+    matchLabels: { app: pedidos }
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/loja-veloz/sa/api-gateway"]
+      to:
+        - operation:
+            methods: ["GET", "POST"]
+            paths: ["/pedidos", "/pedidos/*", "/health/*", "/metrics"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: pagamentos-authz
+  namespace: loja-veloz
+spec:
+  selector:
+    matchLabels: { app: pagamentos }
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/loja-veloz/sa/api-gateway"
+              - "cluster.local/ns/loja-veloz/sa/pedidos"
+      to:
+        - operation:
+            methods: ["GET", "POST"]

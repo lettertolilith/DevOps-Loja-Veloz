@@ -1,0 +1,53 @@
+# =============================================================================
+# Istio Gateway: ponto de entrada HTTP da malha
+# =============================================================================
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: loja-veloz-gateway
+  namespace: loja-veloz
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "loja-veloz.example.com"
+      # Em prod: redirecionar 80 -> 443
+      # tls: { httpsRedirect: true }
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        - "loja-veloz.example.com"
+      tls:
+        mode: SIMPLE
+        credentialName: loja-veloz-tls   # cert-manager + Let's Encrypt
+---
+# =============================================================================
+# VirtualService: roteia tráfego externo -> api-gateway
+# =============================================================================
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: api-gateway-vs
+  namespace: loja-veloz
+spec:
+  hosts: ["loja-veloz.example.com"]
+  gateways: [loja-veloz-gateway]
+  http:
+    - match:
+        - uri: { prefix: "/api/" }
+      route:
+        - destination:
+            host: api-gateway.loja-veloz.svc.cluster.local
+            port: { number: 8000 }
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: "5xx,reset,connect-failure"
+      timeout: 10s

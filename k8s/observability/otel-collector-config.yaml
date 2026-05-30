@@ -1,0 +1,52 @@
+# =============================================================================
+# OpenTelemetry Collector — pipeline única para métricas/logs/traces
+# Recebe via OTLP, exporta para Prometheus / Loki / Jaeger
+# =============================================================================
+receivers:
+  otlp:
+    protocols:
+      grpc: { endpoint: 0.0.0.0:4317 }
+      http: { endpoint: 0.0.0.0:4318 }
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+  memory_limiter:
+    check_interval: 5s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: dev
+        action: upsert
+
+exporters:
+  # Traces -> Jaeger
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls: { insecure: true }
+
+  # Métricas -> Prometheus (scrape pull)
+  prometheus:
+    endpoint: 0.0.0.0:8889
+
+  # Logs -> stdout (em prod: Loki)
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp/jaeger]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [debug]

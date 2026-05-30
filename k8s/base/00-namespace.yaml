@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: loja-veloz
+  labels:
+    name: loja-veloz
+    # Pod Security Admission — enforce 'restricted' baseline
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    # Istio sidecar injection
+    istio-injection: enabled

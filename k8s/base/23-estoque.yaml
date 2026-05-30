@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: estoque
+  namespace: loja-veloz
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: estoque
+  namespace: loja-veloz
+  labels: { app: estoque }
+spec:
+  type: ClusterIP
+  ports: [{ port: 8000, targetPort: 8000, name: http }]
+  selector:
+    app: estoque
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: estoque
+  namespace: loja-veloz
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }
+  selector:
+    matchLabels: { app: estoque }
+  template:
+    metadata:
+      labels:
+        app: estoque
+        version: v1
+    spec:
+      serviceAccountName: estoque
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: estoque
+          image: ghcr.io/loja-veloz/estoque:1.0.0
+          ports: [{ containerPort: 8000, name: http }]
+          envFrom: [{ configMapRef: { name: loja-veloz-config } }]
+          env:
+            - name: POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: loja-veloz-secrets, key: POSTGRES_USER } }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: loja-veloz-secrets, key: POSTGRES_PASSWORD } }
+            - name: RABBITMQ_USER
+              valueFrom: { secretKeyRef: { name: loja-veloz-secrets, key: RABBITMQ_USER } }
+            - name: RABBITMQ_PASSWORD
+              valueFrom: { secretKeyRef: { name: loja-veloz-secrets, key: RABBITMQ_PASSWORD } }
+            - name: DATABASE_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):5432/estoque"
+            - name: RABBITMQ_URL
+              value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASSWORD)@$(RABBITMQ_HOST):5672/"
+            - name: OTEL_SERVICE_NAME
+              value: estoque
+          resources:
+            requests: { cpu: "150m", memory: "192Mi" }
+            limits:   { cpu: "750m", memory: "384Mi" }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8000 }
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8000 }
+            initialDelaySeconds: 20
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - { name: tmp, emptyDir: {} }

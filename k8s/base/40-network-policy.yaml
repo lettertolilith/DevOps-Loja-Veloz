@@ -1,0 +1,69 @@
+# =============================================================================
+# NetworkPolicy — zero trust dentro do namespace
+# Default deny + allow apenas o que o fluxo de negócio precisa
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: loja-veloz
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+# Permite DNS (kube-system) — necessário para qualquer pod
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: loja-veloz
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: kube-system }
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+---
+# API Gateway: recebe do Istio Ingress, envia para pedidos/pagamentos/estoque
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-gateway-policy
+  namespace: loja-veloz
+spec:
+  podSelector:
+    matchLabels: { app: api-gateway }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: istio-system }
+      ports: [{ protocol: TCP, port: 8000 }]
+  egress:
+    - to:
+        - podSelector: { matchLabels: { app: pedidos } }
+        - podSelector: { matchLabels: { app: pagamentos } }
+        - podSelector: { matchLabels: { app: estoque } }
+      ports: [{ protocol: TCP, port: 8000 }]
+---
+# Pedidos: recebe do gateway, fala com Postgres + RabbitMQ
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pedidos-policy
+  namespace: loja-veloz
+spec:
+  podSelector: { matchLabels: { app: pedidos } }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from: [{ podSelector: { matchLabels: { app: api-gateway } } }]
+      ports: [{ protocol: TCP, port: 8000 }]
+  egress:
+    - to: [{ podSelector: { matchLabels: { app: postgres } } }]
+      ports: [{ protocol: TCP, port: 5432 }]
+    - to: [{ podSelector: { matchLabels: { app: rabbitmq } } }]
+      ports: [{ protocol: TCP, port: 5672 }]

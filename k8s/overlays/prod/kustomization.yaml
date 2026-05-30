@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - ../../istio/gateway.yaml
+  - ../../istio/pagamentos-canary.yaml
+  - ../../istio/peer-authentication.yaml
+
+namespace: loja-veloz
+
+# Em prod: réplicas iniciais maiores para sustentar pico
+patches:
+  - target: { kind: Deployment, name: api-gateway }
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 4
+  - target: { kind: Deployment, name: pedidos }
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target: { kind: Deployment, name: pagamentos-v1 }
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 5
+  - target: { kind: Deployment, name: estoque }
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3
+
+configMapGenerator:
+  - name: loja-veloz-env-config
+    literals:
+      - ENVIRONMENT=prod
+      - LOG_LEVEL=INFO

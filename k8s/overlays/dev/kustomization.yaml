@@ -1,0 +1,38 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+namespace: loja-veloz
+
+namePrefix: ""
+
+# Em dev: réplicas reduzidas para economizar recursos
+patches:
+  - target: { kind: Deployment, name: api-gateway }
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  - target: { kind: Deployment, name: pedidos }
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  - target: { kind: Deployment, name: pagamentos-v1 }
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  - target: { kind: Deployment, name: estoque }
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+
+configMapGenerator:
+  - name: loja-veloz-env-config
+    literals:
+      - ENVIRONMENT=dev
+      - LOG_LEVEL=DEBUG

@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: loja-veloz
+
+resources:
+  - 00-namespace.yaml
+  - 01-configmap.yaml
+  - 02-secret.yaml
+  - 10-postgres.yaml
+  - 11-rabbitmq.yaml
+  - 20-api-gateway.yaml
+  - 21-pedidos.yaml
+  - 22-pagamentos.yaml
+  - 23-estoque.yaml
+  - 30-hpa-pdb.yaml
+  - 40-network-policy.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: loja-veloz
+
+images:
+  - name: ghcr.io/loja-veloz/api-gateway
+    newTag: "1.0.0"
+  - name: ghcr.io/loja-veloz/pedidos
+    newTag: "1.0.0"
+  - name: ghcr.io/loja-veloz/pagamentos
+    newTag: "1.0.0"
+  - name: ghcr.io/loja-veloz/estoque
+    newTag: "1.0.0"
