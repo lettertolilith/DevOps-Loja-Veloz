@@ -1,13 +1,13 @@
-variable "name"        { type = string }
-variable "cidr"        { type = string }
-variable "azs"         { type = list(string) }
+variable "name" { type = string }
+variable "cidr" { type = string }
+variable "azs" { type = list(string) }
 variable "environment" { type = string }
 
 resource "aws_vpc" "this" {
   cidr_block           = var.cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
-  tags = { Name = "${var.name}-vpc" }
+  tags                 = { Name = "${var.name}-vpc" }
 }
 
 resource "aws_subnet" "private" {
@@ -16,9 +16,9 @@ resource "aws_subnet" "private" {
   availability_zone = var.azs[count.index]
   cidr_block        = cidrsubnet(var.cidr, 4, count.index)
   tags = {
-    Name                                        = "${var.name}-private-${var.azs[count.index]}"
-    "kubernetes.io/role/internal-elb"           = "1"
-    "kubernetes.io/cluster/${var.name}"         = "shared"
+    Name                                = "${var.name}-private-${var.azs[count.index]}"
+    "kubernetes.io/role/internal-elb"   = "1"
+    "kubernetes.io/cluster/${var.name}" = "shared"
   }
 }
 
@@ -42,6 +42,6 @@ resource "aws_internet_gateway" "this" {
 
 # NAT, route tables etc. — omitidos por concisão; em prod, completar.
 
-output "vpc_id"             { value = aws_vpc.this.id }
+output "vpc_id" { value = aws_vpc.this.id }
 output "private_subnet_ids" { value = aws_subnet.private[*].id }
-output "public_subnet_ids"  { value = aws_subnet.public[*].id }
+output "public_subnet_ids" { value = aws_subnet.public[*].id }

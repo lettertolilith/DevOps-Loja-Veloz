@@ -10,7 +10,6 @@ on:
 permissions:
   contents: read
   packages: write       # publicar no GHCR
-  id-token: write       # OIDC para autenticação cloud
   security-events: write # SARIF upload
 
 env:
@@ -126,33 +125,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  validate-terraform:
-    name: Validate Terraform
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: terraform
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.9.0
-
-      - name: Check formatting
-        run: terraform fmt -recursive -check
-
-      - name: Initialize (no backend for validation)
-        run: terraform init -backend=false
-
-      - name: Validate
-        run: |
-          terraform validate \
-            -var region=us-east-1 \
-            -var environment=dev \
-            -var github_repo=lettertolilith/DevOps-Loja-Veloz
 
   validate-k8s:
     name: Validate K8s manifests

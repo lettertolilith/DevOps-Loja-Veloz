@@ -2,9 +2,9 @@ terraform {
   required_version = ">= 1.6"
 
   required_providers {
-    aws        = { source = "hashicorp/aws",        version = "~> 5.60" }
+    aws        = { source = "hashicorp/aws", version = "~> 5.60" }
     kubernetes = { source = "hashicorp/kubernetes", version = "~> 2.30" }
-    helm       = { source = "hashicorp/helm",       version = "~> 2.14" }
+    helm       = { source = "hashicorp/helm", version = "~> 2.14" }
   }
 
   # backend "s3" {
@@ -47,9 +47,9 @@ module "eks" {
 
   node_groups = {
     general = {
-      desired_size = var.environment == "prod" ? 3 : 2
-      min_size     = var.environment == "prod" ? 3 : 1
-      max_size     = var.environment == "prod" ? 10 : 4
+      desired_size   = var.environment == "prod" ? 3 : 2
+      min_size       = var.environment == "prod" ? 3 : 1
+      max_size       = var.environment == "prod" ? 10 : 4
       instance_types = ["t3.medium"]
       capacity_type  = "ON_DEMAND"
     }
@@ -59,8 +59,8 @@ module "eks" {
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
-  url            = "https://token.actions.githubusercontent.com"
-  client_id_list = ["sts.amazonaws.com"]
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }
 

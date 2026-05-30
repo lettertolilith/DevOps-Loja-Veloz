@@ -1,8 +1,8 @@
-variable "cluster_name"    { type = string }
+variable "cluster_name" { type = string }
 variable "cluster_version" { type = string }
-variable "vpc_id"          { type = string }
-variable "subnet_ids"      { type = list(string) }
-variable "environment"     { type = string }
+variable "vpc_id" { type = string }
+variable "subnet_ids" { type = list(string) }
+variable "environment" { type = string }
 
 variable "node_groups" {
   type = map(object({
@@ -121,5 +121,5 @@ resource "aws_eks_node_group" "this" {
 }
 
 output "cluster_endpoint" { value = aws_eks_cluster.this.endpoint }
-output "cluster_name"     { value = aws_eks_cluster.this.name }
-output "cluster_ca"       { value = aws_eks_cluster.this.certificate_authority[0].data }
+output "cluster_name" { value = aws_eks_cluster.this.name }
+output "cluster_ca" { value = aws_eks_cluster.this.certificate_authority[0].data }
