@@ -40,7 +40,9 @@ jobs:
 
       - name: Setup kustomize
         run: |
-          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          curl -sLO "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz"
+          tar xzf kustomize_v5.4.3_linux_amd64.tar.gz
+          chmod +x kustomize
           sudo mv kustomize /usr/local/bin/
 
       - name: Update image tags in overlay

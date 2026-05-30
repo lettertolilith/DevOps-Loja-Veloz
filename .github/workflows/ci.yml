@@ -109,9 +109,9 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Scan with Trivy
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:sha-${{ github.sha }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.service }}:${{ steps.meta.outputs.version }}
           format: 'sarif'
           output: 'trivy-${{ matrix.service }}.sarif'
           severity: 'CRITICAL,HIGH'
@@ -145,7 +145,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup kustomize
         run: |
-          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          curl -sLO "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz"
+          tar xzf kustomize_v5.4.3_linux_amd64.tar.gz
+          chmod +x kustomize
           sudo mv kustomize /usr/local/bin/
       - name: Build manifests
         run: kustomize build k8s/base > /tmp/manifests.yaml
