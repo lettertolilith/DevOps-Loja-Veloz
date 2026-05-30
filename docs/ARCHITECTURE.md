@@ -12,12 +12,12 @@ flowchart LR
     Gateway -->|HTTP| Pagamentos[Pagamentos]
     Gateway -->|HTTP| Estoque[Estoque]
 
-    Pedidos -->|publica<br/>PedidoCriado| RMQ[(RabbitMQ<br/>exchange: pedidos.events)]
+    Pedidos -->|publica<br/>PedidoCriado| RMQ[("RabbitMQ<br/>exchange pedidos.events")]
     RMQ -->|consome| Pagamentos
     RMQ -->|consome| Estoque
 
-    Pedidos -->|read/write| DB1[(PostgreSQL<br/>db: pedidos)]
-    Estoque -->|read/write| DB2[(PostgreSQL<br/>db: estoque)]
+    Pedidos -->|read/write| DB1[("PostgreSQL<br/>db pedidos")]
+    Estoque -->|read/write| DB2[("PostgreSQL<br/>db estoque")]
 
     Gateway -.OTLP.-> OTel[OTel Collector]
     Pedidos -.OTLP.-> OTel
@@ -65,8 +65,8 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    VS[VirtualService<br/>pagamentos] -->|95%| V1[Deployment<br/>pagamentos-v1<br/>label: version=v1]
-    VS -->|5%|  V2[Deployment<br/>pagamentos-v2<br/>label: version=v2]
+    VS["VirtualService<br/>pagamentos"] -->|95%| V1["Deployment<br/>pagamentos-v1<br/>(version=v1)"]
+    VS -->|5%|  V2["Deployment<br/>pagamentos-v2<br/>(version=v2)"]
     V1 --> Pods1[Pods v1]
     V2 --> Pods2[Pods v2]
 ```
