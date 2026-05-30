@@ -1,10 +1,11 @@
 """Testes do serviço Pagamentos."""
-from unittest.mock import patch, MagicMock
-from fastapi.testclient import TestClient
+import os
+
+os.environ["TESTING"] = "1"
 
 
-@patch("threading.Thread", MagicMock())  # evita iniciar o consumer em testes
 def get_client():
+    from fastapi.testclient import TestClient
     from app.main import app
     return TestClient(app)
 

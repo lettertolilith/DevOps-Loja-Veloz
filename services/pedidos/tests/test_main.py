@@ -1,11 +1,12 @@
 """Testes do serviço Pedidos."""
+import os
 from unittest.mock import patch, MagicMock
-from fastapi.testclient import TestClient
 
-# Patch DB e RabbitMQ ANTES de importar app, para evitar conexões reais
-@patch("pika.BlockingConnection", MagicMock())
-@patch("psycopg.connect", MagicMock())
+os.environ["TESTING"] = "1"
+
+
 def get_client():
+    from fastapi.testclient import TestClient
     from app.main import app
     return TestClient(app)
 

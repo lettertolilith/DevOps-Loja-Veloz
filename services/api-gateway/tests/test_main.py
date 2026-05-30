@@ -1,4 +1,8 @@
 """Testes unitários do API Gateway."""
+import os
+
+os.environ["TESTING"] = "1"
+
 from fastapi.testclient import TestClient
 from app.main import app
 

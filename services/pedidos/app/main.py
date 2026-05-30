@@ -86,9 +86,12 @@ def publicar_evento(pedido: dict[str, Any]) -> None:
         # Não derruba a request — outbox pattern seria o próximo passo.
 
 
-@app.on_event("startup")
 def _startup() -> None:
-    init_schema()
+    if not os.getenv("TESTING"):
+        init_schema()
+
+
+app.add_event_handler("startup", _startup)
 
 
 @app.get("/health/live")

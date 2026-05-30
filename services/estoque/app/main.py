@@ -98,10 +98,21 @@ def consumir_pedidos() -> None:
             time.sleep(5)
 
 
-@app.on_event("startup")
-def _startup() -> None:
-    init_schema()
+def _start_background_consumer() -> None:
+    """Inicia o consumer RabbitMQ em background (exceto em testes)."""
+    if os.getenv("TESTING"):
+        log.info("TESTING mode — skipping consumer startup")
+        return
     threading.Thread(target=consumir_pedidos, daemon=True).start()
+
+
+def _startup() -> None:
+    if not os.getenv("TESTING"):
+        init_schema()
+    _start_background_consumer()
+
+
+app.add_event_handler("startup", _startup)
 
 
 @app.get("/health/live")

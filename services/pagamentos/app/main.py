@@ -70,10 +70,15 @@ def consumir_pedidos() -> None:
             time.sleep(5)
 
 
-@app.on_event("startup")
-def _startup() -> None:
+def _start_background_consumer() -> None:
+    if os.getenv("TESTING"):
+        log.info("TESTING mode — skipping consumer startup")
+        return
     t = threading.Thread(target=consumir_pedidos, daemon=True)
     t.start()
+
+
+app.add_event_handler("startup", _start_background_consumer)
 
 
 @app.get("/health/live")

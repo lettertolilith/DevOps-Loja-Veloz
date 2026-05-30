@@ -66,7 +66,7 @@ sequenceDiagram
 ```mermaid
 flowchart LR
     VS["VirtualService<br/>pagamentos"] -->|95%| V1["Deployment<br/>pagamentos-v1<br/>(version=v1)"]
-    VS -->|5%|  V2["Deployment<br/>pagamentos-v2<br/>(version=v2)"]
+    VS -->|5%| V2["Deployment<br/>pagamentos-v2<br/>(version=v2)"]
     V1 --> Pods1[Pods v1]
     V2 --> Pods2[Pods v2]
 ```
